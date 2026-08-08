@@ -1,11 +1,8 @@
 import express from 'express';
-import session from 'express-session';
-import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 import { pool, initDb } from './db.js';
-import { initAuth, loginHandler, callbackHandler, logoutHandler, requireAuth } from './auth.js';
 import { money, dateDe, dokKategorieLabel } from './helpers.js';
 
 import wohnungenRouter from './routes/wohnungen.js';
@@ -21,7 +18,6 @@ const PORT = process.env.PORT || 8080;
 
 async function main() {
   await initDb();
-  await initAuth();
 
   const app = express();
   app.set('trust proxy', 1);
@@ -31,28 +27,15 @@ async function main() {
   app.use(express.static(path.join(__dirname, 'public')));
   app.use(express.urlencoded({ extended: true }));
 
-  app.use(session({
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 8 },
-  }));
-
   app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
+    res.locals.user = null;
     res.locals.fmtMoney = money;
     res.locals.fmtDate = dateDe;
     res.locals.dokLabel = dokKategorieLabel;
     next();
   });
 
-  app.get('/auth/login', loginHandler);
-  app.get('/auth/callback', callbackHandler);
-  app.get('/auth/logout', logoutHandler);
-
   app.get('/healthz', (req, res) => res.send('ok'));
-
-  app.use(requireAuth);
 
   app.get('/', async (req, res) => {
     const wohnungenCount = await pool.query('SELECT COUNT(*) FROM wohnungen');

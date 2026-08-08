@@ -7,7 +7,3 @@ addons:
   db:
     type: postgres
     attachTo: [app]
-  auth:
-    type: keycloak
-    oidcType: web
-    attachTo: [app]
