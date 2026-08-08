@@ -1,0 +1,28 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Einstellungen</h1>
+<p class="muted mt-0">Diese Angaben erscheinen als Absender auf den Anschreiben an Ihre Mieter.</p>
+
+<% if (gespeichert) { %>
+  <div class="flash">Gespeichert.</div>
+<% } %>
+
+<div class="card">
+  <form action="/einstellungen" method="POST">
+    <div class="field">
+      <label>Name (Vermieter/in)</label>
+      <input type="text" name="vermieter_name" value="<%= einstellungen.vermieter_name || '' %>" placeholder="z. B. Max Mustermann">
+    </div>
+    <div class="field">
+      <label>Adresse</label>
+      <textarea name="vermieter_adresse" placeholder="Straße Hausnummer&#10;PLZ Ort"><%= einstellungen.vermieter_adresse || '' %></textarea>
+    </div>
+    <div class="field">
+      <label>Bankverbindung (für Nachzahlungen)</label>
+      <input type="text" name="bankverbindung" value="<%= einstellungen.bankverbindung || '' %>" placeholder="IBAN, Bank">
+    </div>
+    <button class="btn" type="submit">Speichern</button>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>

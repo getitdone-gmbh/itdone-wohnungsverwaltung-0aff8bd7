@@ -1,0 +1,69 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<div class="section-title no-print">
+  <h1>Anschreiben</h1>
+  <div>
+    <button onclick="window.print()" class="btn secondary">Drucken / als PDF speichern</button>
+    <a href="/nebenkosten" class="btn secondary">Zurück zur Übersicht</a>
+  </div>
+</div>
+
+<div class="letter">
+  <div class="letter-from">
+    <%= einstellungen.vermieter_name || 'Ihr Name (bitte in den Einstellungen ergänzen)' %><br>
+    <%- (einstellungen.vermieter_adresse || '').replace(/\n/g, '<br>') %>
+  </div>
+
+  <div class="letter-to">
+    <%= abrechnung.mieter_name %><br>
+    <%- (abrechnung.mieter_adresse || abrechnung.wohnung_adresse || '').replace(/\n/g, '<br>') %>
+  </div>
+
+  <div class="letter-date"><%= fmtDate(heute) %></div>
+
+  <div class="letter-subject">
+    Betriebs- und Nebenkostenabrechnung <%= abrechnung.jahr %> – <%= abrechnung.wohnung_name %>
+  </div>
+
+  <p>Sehr geehrte(r) <%= abrechnung.mieter_name %>,</p>
+
+  <p>
+    anbei erhalten Sie die Abrechnung der Betriebs- und Nebenkosten für den Zeitraum
+    <% if (abrechnung.zeitraum_von && abrechnung.zeitraum_bis) { %>
+      vom <%= fmtDate(abrechnung.zeitraum_von) %> bis <%= fmtDate(abrechnung.zeitraum_bis) %>
+    <% } else { %>
+      des Jahres <%= abrechnung.jahr %>
+    <% } %>
+    für Ihre Wohnung „<%= abrechnung.wohnung_name %>“.
+  </p>
+
+  <table class="kosten">
+    <tr><th>Position</th><th class="right">Betrag</th></tr>
+    <tr><td>Geleistete Vorauszahlungen</td><td class="right"><%= fmtMoney(abrechnung.vorauszahlung_gesamt) %></td></tr>
+    <tr><td>Tatsächliche Betriebs- und Nebenkosten</td><td class="right"><%= fmtMoney(abrechnung.tatsaechliche_kosten) %></td></tr>
+  </table>
+
+  <% if (differenz >= 0) { %>
+    <div class="result-box positive">
+      Daraus ergibt sich ein Guthaben zu Ihren Gunsten in Höhe von <%= fmtMoney(differenz) %>.
+      Wir werden Ihnen diesen Betrag in den kommenden Tagen erstatten.
+    </div>
+  <% } else { %>
+    <div class="result-box negative">
+      Daraus ergibt sich eine Nachzahlung zu Ihren Lasten in Höhe von <%= fmtMoney(Math.abs(differenz)) %>.
+      Wir bitten Sie, diesen Betrag innerhalb von 14 Tagen auf unten genanntes Konto zu überweisen.
+    </div>
+  <% } %>
+
+  <p style="margin-top:24px;">
+    Bei Fragen zu dieser Abrechnung stehen wir Ihnen gerne zur Verfügung.
+  </p>
+
+  <p>Mit freundlichen Grüßen<br><%= einstellungen.vermieter_name || '' %></p>
+
+  <% if (einstellungen.bankverbindung) { %>
+    <p class="muted" style="margin-top: 30px; font-size: 0.85rem;">Bankverbindung: <%= einstellungen.bankverbindung %></p>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

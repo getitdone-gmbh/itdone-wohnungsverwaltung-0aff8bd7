@@ -1,0 +1,174 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<div class="breadcrumb"><a href="/wohnungen">← Alle Wohnungen</a></div>
+
+<div class="section-title">
+  <h1><%= wohnung.name %></h1>
+  <form action="/wohnungen/<%= wohnung.id %>/loeschen" method="POST" onsubmit="return confirm('Wohnung wirklich löschen? Alle Mietverträge und Zuordnungen werden entfernt.');">
+    <button class="btn danger small" type="submit">Wohnung löschen</button>
+  </form>
+</div>
+<p class="muted mt-0"><%= wohnung.adresse %><% if (wohnung.groesse_qm) { %> · <%= wohnung.groesse_qm %> m²<% } %></p>
+
+<div class="grid grid-3">
+  <a class="stat" style="text-decoration:none;" href="/dokumente?wohnung_id=<%= wohnung.id %>">
+    <div class="num"><%= dokumente.length %></div>
+    <div class="label">Dokumente dieser Wohnung</div>
+  </a>
+  <a class="stat" style="text-decoration:none;" href="/finanzen?wohnung_id=<%= wohnung.id %>">
+    <div class="num"><%= mietvertraege.length %></div>
+    <div class="label">Mietverhältnisse (gesamt)</div>
+  </a>
+  <a class="stat" style="text-decoration:none;" href="/finanzen/report?wohnung_id=<%= wohnung.id %>">
+    <div class="num">→</div>
+    <div class="label">Steuer-Report für diese Wohnung</div>
+  </a>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Neuen Mietvertrag anlegen</h2>
+  <% if (mieterListe.length === 0) { %>
+    <p class="empty">Noch keine Mieter angelegt. <a href="/mieter">Jetzt Mieter anlegen</a>.</p>
+  <% } else { %>
+    <form action="/wohnungen/<%= wohnung.id %>/mietvertraege" method="POST">
+      <div class="field-row">
+        <div class="field">
+          <label>Mieter</label>
+          <select name="mieter_id" required>
+            <option value="">– auswählen –</option>
+            <% mieterListe.forEach(m => { %>
+              <option value="<%= m.id %>"><%= m.name %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="field">
+          <label>Beginn</label>
+          <input type="date" name="beginn" required>
+        </div>
+        <div class="field">
+          <label>Ende (optional)</label>
+          <input type="date" name="ende">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Kaltmiete (€/Monat)</label>
+          <input type="number" step="0.01" name="kaltmiete" required>
+        </div>
+        <div class="field">
+          <label>Nebenkostenvorauszahlung (€/Monat)</label>
+          <input type="number" step="0.01" name="nebenkosten_vorauszahlung" required>
+        </div>
+        <div class="field">
+          <label>Kaution (optional)</label>
+          <input type="number" step="0.01" name="kaution">
+        </div>
+      </div>
+      <div class="field">
+        <label>Notizen</label>
+        <textarea name="notizen" placeholder="optional"></textarea>
+      </div>
+      <button class="btn" type="submit">Mietvertrag anlegen</button>
+    </form>
+    <p class="muted" style="margin-top:8px;">Neuen Mieter zuerst unter <a href="/mieter">Mieter</a> anlegen, falls er noch nicht in der Liste steht.</p>
+  <% } %>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Mietverhältnisse</h2>
+  <% if (mietvertraege.length === 0) { %>
+    <p class="empty">Für diese Wohnung ist noch kein Mietvertrag hinterlegt.</p>
+  <% } else { %>
+    <% mietvertraege.forEach(mv => { %>
+      <div class="divider"></div>
+      <div class="section-title">
+        <h3 class="mt-0"><a href="/mieter/<%= mv.mieter_id %>"><%= mv.mieter_name %></a>
+          <% if (!mv.ende || new Date(mv.ende) >= new Date()) { %>
+            <span class="badge positive">aktiv</span>
+          <% } else { %>
+            <span class="badge neutral">beendet</span>
+          <% } %>
+        </h3>
+        <form action="/mietvertraege/<%= mv.id %>/loeschen" method="POST" onsubmit="return confirm('Mietvertrag wirklich löschen?');">
+          <input type="hidden" name="wohnung_id" value="<%= wohnung.id %>">
+          <button class="btn danger small" type="submit">Löschen</button>
+        </form>
+      </div>
+      <p class="muted mt-0">
+        <%= fmtDate(mv.beginn) %> – <%= mv.ende ? fmtDate(mv.ende) : 'laufend' %> ·
+        Kaltmiete <%= fmtMoney(mv.kaltmiete) %> · Nebenkosten <%= fmtMoney(mv.nebenkosten_vorauszahlung) %>
+        <% if (mv.kaution) { %> · Kaution <%= fmtMoney(mv.kaution) %><% } %>
+      </p>
+      <% if (mv.notizen) { %><p class="muted"><%= mv.notizen %></p><% } %>
+
+      <% const aenderungen = aenderungenByVertrag[mv.id] || []; %>
+      <% if (aenderungen.length > 0) { %>
+        <table>
+          <thead><tr><th>Datum</th><th>Neue Kaltmiete</th><th>Neue Nebenkosten</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <% aenderungen.forEach(a => { %>
+              <tr>
+                <td><%= fmtDate(a.datum) %></td>
+                <td><%= a.neue_kaltmiete ? fmtMoney(a.neue_kaltmiete) : '—' %></td>
+                <td><%= a.neue_nebenkosten ? fmtMoney(a.neue_nebenkosten) : '—' %></td>
+                <td><%= a.beschreibung || '—' %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+
+      <details>
+        <summary class="muted" style="cursor:pointer;">Anpassung erfassen (z. B. Mieterhöhung)</summary>
+        <form action="/mietvertraege/<%= mv.id %>/aenderungen" method="POST" style="margin-top:8px;">
+          <input type="hidden" name="wohnung_id" value="<%= wohnung.id %>">
+          <div class="field-row">
+            <div class="field">
+              <label>Datum</label>
+              <input type="date" name="datum" required>
+            </div>
+            <div class="field">
+              <label>Neue Kaltmiete</label>
+              <input type="number" step="0.01" name="neue_kaltmiete">
+            </div>
+            <div class="field">
+              <label>Neue Nebenkosten</label>
+              <input type="number" step="0.01" name="neue_nebenkosten">
+            </div>
+          </div>
+          <div class="field">
+            <label>Beschreibung</label>
+            <input type="text" name="beschreibung" placeholder="z. B. Mieterhöhung laut Schreiben vom ...">
+          </div>
+          <button class="btn secondary small" type="submit">Anpassung speichern</button>
+        </form>
+      </details>
+    <% }) %>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="section-title">
+    <h2 class="mt-0">Dokumente dieser Wohnung</h2>
+    <a href="/dokumente?wohnung_id=<%= wohnung.id %>" class="btn secondary small">Dokument hochladen</a>
+  </div>
+  <% if (dokumente.length === 0) { %>
+    <p class="empty">Noch keine Dokumente für diese Wohnung.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Datei</th><th>Kategorie</th><th>Jahr</th><th>Hochgeladen am</th></tr></thead>
+      <tbody>
+        <% dokumente.forEach(d => { %>
+          <tr>
+            <td><a href="/dokumente/<%= d.id %>/datei" target="_blank"><%= d.dateiname %></a></td>
+            <td><%= dokLabel(d.kategorie) %></td>
+            <td><%= d.jahr || '—' %></td>
+            <td><%= fmtDate(d.hochgeladen_am) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

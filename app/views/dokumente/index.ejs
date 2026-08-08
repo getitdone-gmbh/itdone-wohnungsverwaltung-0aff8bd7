@@ -1,0 +1,114 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Dokumente</h1>
+<p class="muted mt-0">Grundsteuerbescheide, Nebenkostenabrechnungen der Hausverwaltung, Mietverträge und weitere Unterlagen an einem Ort.</p>
+
+<div class="card">
+  <h2 class="mt-0">Dokument hochladen</h2>
+  <form action="/dokumente" method="POST" enctype="multipart/form-data">
+    <div class="field-row">
+      <div class="field">
+        <label>Kategorie</label>
+        <select name="kategorie" required>
+          <option value="">– auswählen –</option>
+          <% kategorien.forEach(k => { %>
+            <option value="<%= k.value %>" <%= filter.kategorie === k.value ? 'selected' : '' %>><%= k.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Wohnung</label>
+        <select name="wohnung_id">
+          <option value="">– keine –</option>
+          <% wohnungen.forEach(w => { %>
+            <option value="<%= w.id %>" <%= String(filter.wohnung_id) === String(w.id) ? 'selected' : '' %>><%= w.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Mieter</label>
+        <select name="mieter_id">
+          <option value="">– keiner –</option>
+          <% mieterListe.forEach(m => { %>
+            <option value="<%= m.id %>" <%= String(filter.mieter_id) === String(m.id) ? 'selected' : '' %>><%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Jahr</label>
+        <input type="number" name="jahr" placeholder="z. B. 2025" value="<%= filter.jahr || '' %>">
+      </div>
+    </div>
+    <div class="field">
+      <label>Datei (PDF, Bild, ...)</label>
+      <input type="file" name="datei" required>
+    </div>
+    <button class="btn" type="submit">Hochladen</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Archiv durchsuchen</h2>
+  <form class="filters" method="GET" action="/dokumente">
+    <div class="field">
+      <label>Wohnung</label>
+      <select name="wohnung_id">
+        <option value="">Alle</option>
+        <% wohnungen.forEach(w => { %>
+          <option value="<%= w.id %>" <%= String(filter.wohnung_id) === String(w.id) ? 'selected' : '' %>><%= w.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label>Mieter</label>
+      <select name="mieter_id">
+        <option value="">Alle</option>
+        <% mieterListe.forEach(m => { %>
+          <option value="<%= m.id %>" <%= String(filter.mieter_id) === String(m.id) ? 'selected' : '' %>><%= m.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label>Kategorie</label>
+      <select name="kategorie">
+        <option value="">Alle</option>
+        <% kategorien.forEach(k => { %>
+          <option value="<%= k.value %>" <%= filter.kategorie === k.value ? 'selected' : '' %>><%= k.label %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label>Jahr</label>
+      <input type="number" name="jahr" value="<%= filter.jahr || '' %>">
+    </div>
+    <button class="btn secondary" type="submit">Filtern</button>
+    <a href="/dokumente" class="btn secondary">Zurücksetzen</a>
+  </form>
+
+  <% if (dokumente.length === 0) { %>
+    <p class="empty">Keine Dokumente gefunden.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Datei</th><th>Kategorie</th><th>Wohnung</th><th>Mieter</th><th>Jahr</th><th>Hochgeladen am</th><th></th></tr></thead>
+      <tbody>
+        <% dokumente.forEach(d => { %>
+          <tr>
+            <td><a href="/dokumente/<%= d.id %>/datei" target="_blank"><%= d.dateiname %></a></td>
+            <td><%= dokLabel(d.kategorie) %></td>
+            <td><%= d.wohnung_name || '—' %></td>
+            <td><%= d.mieter_name || '—' %></td>
+            <td><%= d.jahr || '—' %></td>
+            <td><%= fmtDate(d.hochgeladen_am) %></td>
+            <td class="right">
+              <form action="/dokumente/<%= d.id %>/loeschen" method="POST" onsubmit="return confirm('Dokument wirklich löschen?');">
+                <button class="btn danger small" type="submit">Löschen</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

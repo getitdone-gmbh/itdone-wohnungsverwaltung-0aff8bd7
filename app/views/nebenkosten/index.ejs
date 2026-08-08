@@ -1,0 +1,128 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Nebenkostenabrechnung</h1>
+<p class="muted mt-0">Erstellen Sie hier die jährliche Abrechnung je Mieter und erzeugen Sie daraus automatisch ein Anschreiben mit Nachzahlung oder Erstattung.</p>
+
+<div class="card">
+  <h2 class="mt-0">Neue Abrechnung erstellen</h2>
+  <form action="/nebenkosten" method="POST" id="nk-form">
+    <div class="field-row">
+      <div class="field">
+        <label>Wohnung</label>
+        <select name="wohnung_id" id="wohnung-select" required>
+          <option value="">– auswählen –</option>
+          <% wohnungen.forEach(w => { %>
+            <option value="<%= w.id %>"><%= w.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Mieter</label>
+        <select name="mieter_id" id="mieter-select" required>
+          <option value="">– zuerst Wohnung wählen –</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Jahr</label>
+        <input type="number" name="jahr" id="jahr-input" value="<%= thisYear - 1 %>" required>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Zeitraum von</label>
+        <input type="date" name="zeitraum_von">
+      </div>
+      <div class="field">
+        <label>Zeitraum bis</label>
+        <input type="date" name="zeitraum_bis">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Vorauszahlungen gesamt (€)</label>
+        <input type="number" step="0.01" name="vorauszahlung_gesamt" id="vorauszahlung-input" required>
+      </div>
+      <div class="field">
+        <label>Tatsächliche Kosten (€)</label>
+        <input type="number" step="0.01" name="tatsaechliche_kosten" id="kosten-input" required>
+      </div>
+    </div>
+    <p class="muted" id="vorschlag-hinweis"></p>
+    <button class="btn" type="submit">Abrechnung erstellen &amp; Anschreiben öffnen</button>
+  </form>
+</div>
+
+<script>
+  const mietverhaeltnisse = <%- JSON.stringify(mietverhaeltnisse) %>;
+  const wohnungSelect = document.getElementById('wohnung-select');
+  const mieterSelect = document.getElementById('mieter-select');
+  const jahrInput = document.getElementById('jahr-input');
+  const vorauszahlungInput = document.getElementById('vorauszahlung-input');
+  const kostenInput = document.getElementById('kosten-input');
+  const hinweis = document.getElementById('vorschlag-hinweis');
+
+  function updateMieter() {
+    const wid = wohnungSelect.value;
+    const passende = mietverhaeltnisse.filter(m => String(m.wohnung_id) === String(wid));
+    mieterSelect.innerHTML = passende.length
+      ? passende.map(m => `<option value="${m.mieter_id}">${m.name}</option>`).join('')
+      : '<option value="">Keine Mieter für diese Wohnung</option>';
+    ladeVorschlag();
+  }
+
+  async function ladeVorschlag() {
+    const wid = wohnungSelect.value;
+    const jahr = jahrInput.value;
+    const mid = mieterSelect.value;
+    if (!wid || !jahr) return;
+    try {
+      const res = await fetch(`/nebenkosten/vorschlag?wohnung_id=${wid}&jahr=${jahr}&mieter_id=${mid || ''}`);
+      const data = await res.json();
+      if (data.kosten !== undefined) {
+        kostenInput.value = data.kosten.toFixed(2);
+        vorauszahlungInput.value = data.vorauszahlung.toFixed(2);
+        hinweis.textContent = 'Werte automatisch aus Ihren erfassten Kosten und dem Mietvertrag vorgeschlagen – bitte prüfen und ggf. anpassen.';
+      }
+    } catch (e) { /* ignore */ }
+  }
+
+  wohnungSelect.addEventListener('change', updateMieter);
+  mieterSelect.addEventListener('change', ladeVorschlag);
+  jahrInput.addEventListener('change', ladeVorschlag);
+</script>
+
+<div class="card">
+  <h2 class="mt-0">Erstellte Abrechnungen</h2>
+  <% if (abrechnungen.length === 0) { %>
+    <p class="empty">Noch keine Abrechnung erstellt.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Jahr</th><th>Wohnung</th><th>Mieter</th><th class="right">Vorauszahlung</th><th class="right">Kosten</th><th class="right">Differenz</th><th></th></tr></thead>
+      <tbody>
+        <% abrechnungen.forEach(n => { %>
+          <% const diff = Number(n.vorauszahlung_gesamt) - Number(n.tatsaechliche_kosten); %>
+          <tr>
+            <td><%= n.jahr %></td>
+            <td><%= n.wohnung_name %></td>
+            <td><%= n.mieter_name %></td>
+            <td class="right"><%= fmtMoney(n.vorauszahlung_gesamt) %></td>
+            <td class="right"><%= fmtMoney(n.tatsaechliche_kosten) %></td>
+            <td class="right">
+              <span class="badge <%= diff >= 0 ? 'positive' : 'negative' %>">
+                <%= diff >= 0 ? 'Erstattung ' + fmtMoney(diff) : 'Nachzahlung ' + fmtMoney(Math.abs(diff)) %>
+              </span>
+            </td>
+            <td class="right">
+              <a href="/nebenkosten/<%= n.id %>/anschreiben" class="btn secondary small">Anschreiben</a>
+              <form action="/nebenkosten/<%= n.id %>/loeschen" method="POST" style="display:inline;" onsubmit="return confirm('Abrechnung wirklich löschen?');">
+                <button class="btn danger small" type="submit">Löschen</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

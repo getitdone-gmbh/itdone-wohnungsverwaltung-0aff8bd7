@@ -1,0 +1,83 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<div class="breadcrumb"><a href="/mieter">← Alle Mieter</a></div>
+
+<div class="section-title">
+  <h1><%= mieter.name %></h1>
+  <form action="/mieter/<%= mieter.id %>/loeschen" method="POST" onsubmit="return confirm('Mieter wirklich löschen?');">
+    <button class="btn danger small" type="submit">Löschen</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Stammdaten</h2>
+  <form action="/mieter/<%= mieter.id %>/bearbeiten" method="POST">
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" value="<%= mieter.name %>" required>
+      </div>
+      <div class="field">
+        <label>E-Mail</label>
+        <input type="email" name="email" value="<%= mieter.email || '' %>">
+      </div>
+      <div class="field">
+        <label>Telefon</label>
+        <input type="text" name="telefon" value="<%= mieter.telefon || '' %>">
+      </div>
+    </div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" name="adresse" value="<%= mieter.adresse || '' %>">
+    </div>
+    <button class="btn secondary" type="submit">Speichern</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Mietverhältnisse</h2>
+  <% if (mietvertraege.length === 0) { %>
+    <p class="empty">Diesem Mieter ist noch kein Mietvertrag zugeordnet.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Wohnung</th><th>Beginn</th><th>Ende</th><th>Kaltmiete</th><th>Nebenkosten</th></tr></thead>
+      <tbody>
+        <% mietvertraege.forEach(mv => { %>
+          <tr>
+            <td><a href="/wohnungen/<%= mv.wohnung_id %>"><%= mv.wohnung_name %></a></td>
+            <td><%= fmtDate(mv.beginn) %></td>
+            <td><%= mv.ende ? fmtDate(mv.ende) : 'laufend' %></td>
+            <td><%= fmtMoney(mv.kaltmiete) %></td>
+            <td><%= fmtMoney(mv.nebenkosten_vorauszahlung) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="section-title">
+    <h2 class="mt-0">Dokumente dieses Mieters</h2>
+    <a href="/dokumente?mieter_id=<%= mieter.id %>" class="btn secondary small">Dokument hochladen</a>
+  </div>
+  <% if (dokumente.length === 0) { %>
+    <p class="empty">Noch keine Dokumente für diesen Mieter (z. B. Mietvertrag als PDF).</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Datei</th><th>Kategorie</th><th>Jahr</th><th>Hochgeladen am</th></tr></thead>
+      <tbody>
+        <% dokumente.forEach(d => { %>
+          <tr>
+            <td><a href="/dokumente/<%= d.id %>/datei" target="_blank"><%= d.dateiname %></a></td>
+            <td><%= dokLabel(d.kategorie) %></td>
+            <td><%= d.jahr || '—' %></td>
+            <td><%= fmtDate(d.hochgeladen_am) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

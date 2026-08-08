@@ -1,0 +1,46 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Wohnungen</h1>
+
+<div class="card">
+  <h2 class="mt-0">Neue Wohnung anlegen</h2>
+  <form action="/wohnungen" method="POST" class="inline-form">
+    <div class="field">
+      <label>Bezeichnung</label>
+      <input type="text" name="name" placeholder="z. B. Wohnung Musterstraße 1" required>
+    </div>
+    <div class="field">
+      <label>Adresse</label>
+      <input type="text" name="adresse" placeholder="Straße, PLZ Ort" required>
+    </div>
+    <div class="field">
+      <label>Größe (m²)</label>
+      <input type="number" step="0.1" name="groesse_qm" placeholder="optional">
+    </div>
+    <button class="btn" type="submit">Anlegen</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Alle Wohnungen</h2>
+  <% if (wohnungen.length === 0) { %>
+    <p class="empty">Noch keine Wohnungen angelegt.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Bezeichnung</th><th>Adresse</th><th>Größe</th><th>Aktueller Mieter</th><th></th></tr></thead>
+      <tbody>
+        <% wohnungen.forEach(w => { %>
+          <tr>
+            <td><a href="/wohnungen/<%= w.id %>"><%= w.name %></a></td>
+            <td><%= w.adresse %></td>
+            <td><%= w.groesse_qm ? w.groesse_qm + ' m²' : '—' %></td>
+            <td><%= w.aktueller_mieter || '—' %></td>
+            <td class="right"><a href="/wohnungen/<%= w.id %>" class="btn secondary small">Öffnen</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

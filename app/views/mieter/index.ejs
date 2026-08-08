@@ -1,0 +1,52 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Mieter</h1>
+
+<div class="card">
+  <h2 class="mt-0">Neuen Mieter anlegen</h2>
+  <form action="/mieter" method="POST">
+    <div class="field-row">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="field">
+        <label>E-Mail</label>
+        <input type="email" name="email">
+      </div>
+      <div class="field">
+        <label>Telefon</label>
+        <input type="text" name="telefon">
+      </div>
+    </div>
+    <div class="field">
+      <label>Adresse (für Anschreiben, falls abweichend von der Wohnung)</label>
+      <input type="text" name="adresse" placeholder="optional">
+    </div>
+    <button class="btn" type="submit">Anlegen</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2 class="mt-0">Alle Mieter</h2>
+  <% if (mieter.length === 0) { %>
+    <p class="empty">Noch keine Mieter angelegt.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Name</th><th>E-Mail</th><th>Telefon</th><th>Aktuelle Wohnung</th><th></th></tr></thead>
+      <tbody>
+        <% mieter.forEach(m => { %>
+          <tr>
+            <td><a href="/mieter/<%= m.id %>"><%= m.name %></a></td>
+            <td><%= m.email || '—' %></td>
+            <td><%= m.telefon || '—' %></td>
+            <td><%= m.aktuelle_wohnung || '—' %></td>
+            <td class="right"><a href="/mieter/<%= m.id %>" class="btn secondary small">Öffnen</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

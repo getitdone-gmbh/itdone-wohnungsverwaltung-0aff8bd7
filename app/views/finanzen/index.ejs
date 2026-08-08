@@ -1,0 +1,119 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<h1>Kosten &amp; Erträge</h1>
+<p class="muted mt-0">Erfassen Sie hier alle Einnahmen (Miete) und Ausgaben (Grundsteuer, Hausverwaltung, Reparaturen, ...) je Wohnung und Jahr – Grundlage für den Steuer-Report.</p>
+
+<div class="card">
+  <h2 class="mt-0">Neuen Eintrag erfassen</h2>
+  <form action="/finanzen" method="POST">
+    <div class="field-row">
+      <div class="field">
+        <label>Wohnung</label>
+        <select name="wohnung_id" required>
+          <option value="">– auswählen –</option>
+          <% wohnungen.forEach(w => { %>
+            <option value="<%= w.id %>"><%= w.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Jahr</label>
+        <input type="number" name="jahr" value="<%= thisYear %>" required>
+      </div>
+      <div class="field">
+        <label>Art</label>
+        <select name="art" id="art-select" required onchange="updateKategorien()">
+          <option value="kosten">Kosten</option>
+          <option value="ertrag">Ertrag</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Kategorie</label>
+        <select name="kategorie" id="kategorie-select" required>
+          <% kategorienKosten.forEach(k => { %><option value="<%= k %>"><%= k %></option><% }) %>
+        </select>
+      </div>
+      <div class="field">
+        <label>Betrag (€)</label>
+        <input type="number" step="0.01" name="betrag" required>
+      </div>
+      <div class="field">
+        <label>Datum</label>
+        <input type="date" name="datum">
+      </div>
+    </div>
+    <div class="field">
+      <label>Beschreibung</label>
+      <input type="text" name="beschreibung" placeholder="optional, z. B. Rechnungsnummer">
+    </div>
+    <button class="btn" type="submit">Speichern</button>
+  </form>
+</div>
+
+<script>
+  const kostenKategorien = <%- JSON.stringify(kategorienKosten) %>;
+  const ertragKategorien = <%- JSON.stringify(kategorienErtrag) %>;
+  function updateKategorien() {
+    const art = document.getElementById('art-select').value;
+    const sel = document.getElementById('kategorie-select');
+    const list = art === 'kosten' ? kostenKategorien : ertragKategorien;
+    sel.innerHTML = list.map(k => `<option value="${k}">${k}</option>`).join('');
+  }
+</script>
+
+<div class="card">
+  <div class="section-title">
+    <h2 class="mt-0">Erfasste Einträge</h2>
+    <a href="/finanzen/report" class="btn secondary small">Zum Steuer-Report</a>
+  </div>
+  <form class="filters" method="GET" action="/finanzen">
+    <div class="field">
+      <label>Wohnung</label>
+      <select name="wohnung_id">
+        <option value="">Alle</option>
+        <% wohnungen.forEach(w => { %>
+          <option value="<%= w.id %>" <%= String(filter.wohnung_id) === String(w.id) ? 'selected' : '' %>><%= w.name %></option>
+        <% }) %>
+      </select>
+    </div>
+    <div class="field">
+      <label>Jahr</label>
+      <select name="jahr">
+        <option value="">Alle</option>
+        <% jahre.forEach(j => { %>
+          <option value="<%= j %>" <%= String(filter.jahr) === String(j) ? 'selected' : '' %>><%= j %></option>
+        <% }) %>
+      </select>
+    </div>
+    <button class="btn secondary" type="submit">Filtern</button>
+  </form>
+
+  <% if (eintraege.length === 0) { %>
+    <p class="empty">Noch keine Einträge erfasst.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Datum</th><th>Wohnung</th><th>Jahr</th><th>Art</th><th>Kategorie</th><th class="right">Betrag</th><th></th></tr></thead>
+      <tbody>
+        <% eintraege.forEach(e => { %>
+          <tr>
+            <td><%= e.datum ? fmtDate(e.datum) : '—' %></td>
+            <td><%= e.wohnung_name %></td>
+            <td><%= e.jahr %></td>
+            <td><span class="badge <%= e.art === 'ertrag' ? 'positive' : 'negative' %>"><%= e.art === 'ertrag' ? 'Ertrag' : 'Kosten' %></span></td>
+            <td><%= e.kategorie %></td>
+            <td class="right"><%= fmtMoney(e.betrag) %></td>
+            <td class="right">
+              <form action="/finanzen/<%= e.id %>/loeschen" method="POST" onsubmit="return confirm('Eintrag wirklich löschen?');">
+                <button class="btn danger small" type="submit">Löschen</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

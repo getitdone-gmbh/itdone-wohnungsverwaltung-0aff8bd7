@@ -1,0 +1,70 @@
+<%- include('partials/header', { title, active, user }) %>
+
+<h1>Übersicht</h1>
+
+<div class="grid grid-3" style="margin-bottom: 24px;">
+  <div class="stat">
+    <div class="num"><%= counts.wohnungen %></div>
+    <div class="label">Wohnungen</div>
+  </div>
+  <div class="stat">
+    <div class="num"><%= counts.mieter %></div>
+    <div class="label">Mieter</div>
+  </div>
+  <div class="stat">
+    <div class="num"><%= counts.dokumente %></div>
+    <div class="label">Dokumente archiviert</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">
+    <h2 class="mt-0">Wohnungen im Überblick</h2>
+    <a href="/wohnungen" class="btn secondary small">Alle Wohnungen</a>
+  </div>
+  <% if (wohnungenUebersicht.length === 0) { %>
+    <p class="empty">Noch keine Wohnungen angelegt. <a href="/wohnungen">Jetzt erste Wohnung anlegen</a>.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr><th>Wohnung</th><th>Adresse</th><th>Aktueller Mieter</th><th class="right">Kaltmiete</th><th class="right">Nebenkosten</th></tr>
+      </thead>
+      <tbody>
+        <% wohnungenUebersicht.forEach(w => { %>
+          <tr>
+            <td><a href="/wohnungen/<%= w.id %>"><%= w.name %></a></td>
+            <td><%= w.adresse %></td>
+            <td><%= w.mieter_name || '—' %></td>
+            <td class="right"><%= w.kaltmiete ? fmtMoney(w.kaltmiete) : '—' %></td>
+            <td class="right"><%= w.nebenkosten_vorauszahlung ? fmtMoney(w.nebenkosten_vorauszahlung) : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<div class="card">
+  <div class="section-title">
+    <h2 class="mt-0">Zuletzt archivierte Dokumente</h2>
+    <a href="/dokumente" class="btn secondary small">Alle Dokumente</a>
+  </div>
+  <% if (neuesteDokumente.length === 0) { %>
+    <p class="empty">Noch keine Dokumente hochgeladen.</p>
+  <% } else { %>
+    <table>
+      <thead><tr><th>Datei</th><th>Wohnung</th><th>Hochgeladen am</th></tr></thead>
+      <tbody>
+        <% neuesteDokumente.forEach(d => { %>
+          <tr>
+            <td><a href="/dokumente/<%= d.id %>/datei" target="_blank"><%= d.dateiname %></a></td>
+            <td><%= d.wohnung_name || '—' %></td>
+            <td><%= fmtDate(d.hochgeladen_am) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,102 @@
+<%- include('../partials/header', { title, active, user }) %>
+
+<div class="section-title no-print">
+  <h1>Steuer-Report <%= jahr %></h1>
+  <div>
+    <button onclick="window.print()" class="btn secondary">Drucken / als PDF speichern</button>
+    <a href="/finanzen/report.csv?jahr=<%= jahr %><%= modus === 'einzeln' ? '&wohnung_id=' + wohnung.id : '' %>" class="btn secondary">Als CSV exportieren</a>
+  </div>
+</div>
+<p class="muted no-print">Übersicht der Kosten und Erträge je Wohnung – als Grundlage für die Anlage V Ihrer Einkommensteuererklärung.</p>
+
+<form class="filters no-print" method="GET" action="/finanzen/report">
+  <div class="field">
+    <label>Jahr</label>
+    <select name="jahr">
+      <% jahre.forEach(j => { %>
+        <option value="<%= j %>" <%= Number(jahr) === Number(j) ? 'selected' : '' %>><%= j %></option>
+      <% }) %>
+    </select>
+  </div>
+  <div class="field">
+    <label>Wohnung</label>
+    <select name="wohnung_id">
+      <option value="">Alle Wohnungen (Übersicht)</option>
+      <% wohnungen.forEach(w => { %>
+        <option value="<%= w.id %>" <%= modus === 'einzeln' && String(wohnung.id) === String(w.id) ? 'selected' : '' %>><%= w.name %></option>
+      <% }) %>
+    </select>
+  </div>
+  <button class="btn secondary" type="submit">Anzeigen</button>
+</form>
+
+<% if (modus === 'alle') { %>
+  <div class="card">
+    <h2 class="mt-0">Alle Wohnungen – Jahr <%= jahr %></h2>
+    <% if (zeilen.length === 0) { %>
+      <p class="empty">Noch keine Wohnungen angelegt.</p>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Wohnung</th><th class="right">Erträge</th><th class="right">Kosten</th><th class="right">Ergebnis</th></tr></thead>
+        <tbody>
+          <% zeilen.forEach(z => { %>
+            <tr>
+              <td><a href="/finanzen/report?wohnung_id=<%= z.id %>&jahr=<%= jahr %>"><%= z.name %></a></td>
+              <td class="right"><%= fmtMoney(z.ertraege) %></td>
+              <td class="right"><%= fmtMoney(z.kosten) %></td>
+              <td class="right"><strong><%= fmtMoney(z.ergebnis) %></strong></td>
+            </tr>
+          <% }) %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>Gesamt</strong></td>
+            <td class="right"><strong><%= fmtMoney(gesamtErtraege) %></strong></td>
+            <td class="right"><strong><%= fmtMoney(gesamtKosten) %></strong></td>
+            <td class="right"><strong><%= fmtMoney(gesamtErgebnis) %></strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    <% } %>
+  </div>
+<% } else { %>
+  <div class="card">
+    <h2 class="mt-0"><%= wohnung.name %> – Jahr <%= jahr %></h2>
+    <p class="muted mt-0"><%= wohnung.adresse %></p>
+
+    <h3>Erträge</h3>
+    <% if (ertraege.length === 0) { %>
+      <p class="empty">Keine Erträge erfasst.</p>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Kategorie</th><th class="right">Summe</th></tr></thead>
+        <tbody>
+          <% ertraege.forEach(r => { %>
+            <tr><td><%= r.kategorie %></td><td class="right"><%= fmtMoney(r.summe) %></td></tr>
+          <% }) %>
+        </tbody>
+        <tfoot><tr><td><strong>Summe Erträge</strong></td><td class="right"><strong><%= fmtMoney(summeErtraege) %></strong></td></tr></tfoot>
+      </table>
+    <% } %>
+
+    <h3>Kosten</h3>
+    <% if (kosten.length === 0) { %>
+      <p class="empty">Keine Kosten erfasst.</p>
+    <% } else { %>
+      <table>
+        <thead><tr><th>Kategorie</th><th class="right">Summe</th></tr></thead>
+        <tbody>
+          <% kosten.forEach(r => { %>
+            <tr><td><%= r.kategorie %></td><td class="right"><%= fmtMoney(r.summe) %></td></tr>
+          <% }) %>
+        </tbody>
+        <tfoot><tr><td><strong>Summe Kosten</strong></td><td class="right"><strong><%= fmtMoney(summeKosten) %></strong></td></tr></tfoot>
+      </table>
+    <% } %>
+
+    <div class="divider"></div>
+    <h3>Ergebnis: <%= fmtMoney(ergebnis) %> <%= ergebnis >= 0 ? '(Überschuss)' : '(Verlust)' %></h3>
+  </div>
+<% } %>
+
+<%- include('../partials/footer') %>

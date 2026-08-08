@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title + ' – Wohnungsverwaltung' : 'Wohnungsverwaltung' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar no-print">
+      <div class="brand">Wohnungsverwaltung</div>
+      <nav class="mainnav">
+        <a href="/" class="<%= active === 'dashboard' ? 'active' : '' %>">Übersicht</a>
+        <a href="/wohnungen" class="<%= active === 'wohnungen' ? 'active' : '' %>">Wohnungen</a>
+        <a href="/mieter" class="<%= active === 'mieter' ? 'active' : '' %>">Mieter</a>
+        <a href="/dokumente" class="<%= active === 'dokumente' ? 'active' : '' %>">Dokumente</a>
+        <a href="/finanzen" class="<%= active === 'finanzen' ? 'active' : '' %>">Kosten &amp; Erträge</a>
+        <a href="/nebenkosten" class="<%= active === 'nebenkosten' ? 'active' : '' %>">Nebenkostenabrechnung</a>
+      </nav>
+      <div class="topbar-user">
+        <span><%= user ? user.name : '' %></span>
+        <a href="/einstellungen" class="icon-link" title="Einstellungen">Einstellungen</a>
+        <a href="/auth/logout" class="icon-link">Abmelden</a>
+      </div>
+    </header>
+    <main class="content">
